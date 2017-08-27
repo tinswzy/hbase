@@ -365,9 +365,7 @@ END
   post {
     always {
       script {
-/*
          try {
-*/
            sh "printenv"
            def results = ["${env.OUTPUT_RELATIVE_GENERAL}/failure", "${env.OUTPUT_RELATIVE_GENERAL}/success",
                           "${env.OUTPUT_RELATIVE_JDK7}/failure", "${env.OUTPUT_RELATIVE_JDK7}/success",
@@ -413,11 +411,18 @@ END
                echo "	${change.commitId}"
                echo "     ${change.author}"
                echo ""
-               // Workaround for JENKINS-46358
-               writeFile file: 'tmp_commit_file', text: msg
+               // Start workaround for JENKINS-46358
+               // Start workaround for unknown jenkins error where writeFile requires a serialization
+               //writeFile file: 'tmp_commit_file', text: msg
+               sh  """#!/usr/bin/env bash
+                 cat << 'EOF' > tmp_commit_file
+${msg}
+EOF
+"""
                echo "finished writing commit to a file."
                sh "grep -o -E 'HBASE-[0-9]+' 'tmp_commit_file' >matched_jiras"
                echo "finished filtering via grep."
+               // End workaround for JENKINS-46258
                def jiras = readFile(file: 'matched_jiras').split()
                if (jiras.length == 0) {
                  echo "[WARN] no JIRA key found in message, TODO email committer"
@@ -435,12 +440,10 @@ END
                }
              }
            }
-/*
         } catch (Exception exception) {
           echo "Got exception: ${exception}"
           echo "	${exception.getStackTrace()}"
         }
-*/
       }
     }
   }
