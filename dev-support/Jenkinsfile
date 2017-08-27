@@ -409,8 +409,10 @@ END
                echo "     ${change.author}"
                echo ""
                // Workaround for JENKINS-46358
-               writeFile file: 'tmp_commit_file', text: "${msg}"
-               sh '''grep -o -E 'HBASE-[0-9]+' 'tmp_commit_file' >matched_jiras'''
+               writeFile file: 'tmp_commit_file', text: msg
+               echo "finished writing commit to a file."
+               sh "grep -o -E 'HBASE-[0-9]+' 'tmp_commit_file' >matched_jiras"
+               echo "finished filtering via grep."
                def jiras = readFile(file: 'matched_jiras').split()
                if (jiras.length == 0) {
                  echo "[WARN] no JIRA key found in message, TODO email committer"
