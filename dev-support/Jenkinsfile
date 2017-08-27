@@ -365,7 +365,9 @@ END
   post {
     always {
       script {
+/*
          try {
+*/
            sh "printenv"
            def results = ["${env.OUTPUT_RELATIVE_GENERAL}/failure", "${env.OUTPUT_RELATIVE_GENERAL}/success",
                           "${env.OUTPUT_RELATIVE_JDK7}/failure", "${env.OUTPUT_RELATIVE_JDK7}/success",
@@ -433,10 +435,12 @@ END
                }
              }
            }
+/*
         } catch (Exception exception) {
           echo "Got exception: ${exception}"
           echo "	${exception.getStackTrace()}"
         }
+*/
       }
     }
   }
