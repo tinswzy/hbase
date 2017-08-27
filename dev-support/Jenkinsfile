@@ -394,13 +394,16 @@ END
            echo ""
            echo "[INFO] There are ${currentBuild.changeSets.size()} change sets."
            def seenJiras = []
-           for ( changelist in currentBuild.changeSets ) {
+           for (int i = 0; i < currentBuild.changeSets.size(); i++) {
+             def changelist = currentBuild.changeSets.get(i)
              if ( changelist.isEmptySet() ) {
                echo "[DEBUG] change set was empty, skipping JIRA comments."
              } else {
                echo "[DEBUG] there are changes in the change set. Attempting to post comments."
              }
-             for ( change in changelist ) {
+             def changes = changelist.getLogs()
+             for (int j = 0; j < changes.size(); j++) {
+               def change = changes.get(j)
                CharSequence msg = change.msg
                echo "[DEBUG] msg is of class ${msg.class}"
                echo "change: ${change}"
@@ -417,7 +420,8 @@ END
                if (jiras.length == 0) {
                  echo "[WARN] no JIRA key found in message, TODO email committer"
                }
-               for (currentIssue in jiras) {
+               for (int k = 0; k < jiras.length; k++) {
+                 def currentIssue = jiras[k]
                  echo "[DEBUG] found jira key: ${currentIssue}"
                  if ( currentIssue in seenJiras ) {
                    echo "[DEBUG] already commented on ${currentIssue}."
