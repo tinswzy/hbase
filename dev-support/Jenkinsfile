@@ -395,6 +395,7 @@ END
            echo "[INFO] There are ${currentBuild.changeSets.size()} change sets."
            def seenJiras = []
            for (int i = 0; i < currentBuild.changeSets.size(); i++) {
+/*
              def changelist = currentBuild.changeSets.get(i)
              if ( changelist.isEmptySet() ) {
                echo "[DEBUG] change set was empty, skipping JIRA comments."
@@ -402,6 +403,8 @@ END
                echo "[DEBUG] there are changes in the change set. Attempting to post comments."
              }
              def changes = changelist.getItems()
+*/
+             def changes = currentBuild.changeSets.get(i).getItems()
              for (int j = 0; j < changes.length; j++) {
                def change = changes[j]
                CharSequence msg = change.msg
