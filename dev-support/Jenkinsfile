@@ -401,9 +401,9 @@ END
              } else {
                echo "[DEBUG] there are changes in the change set. Attempting to post comments."
              }
-             def changes = changelist.getLogs()
-             for (int j = 0; j < changes.size(); j++) {
-               def change = changes.get(j)
+             def changes = changelist.getItems()
+             for (int j = 0; j < changes.length; j++) {
+               def change = changes[j]
                CharSequence msg = change.msg
                echo "[DEBUG] msg is of class ${msg.class}"
                echo "change: ${change}"
