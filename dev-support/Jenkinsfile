@@ -394,7 +394,6 @@ END
            echo ""
            echo "[INFO] There are ${currentBuild.changeSets.size()} change sets."
            def seenJiras = []
-           CharSequence pattern = /HBASE-[0-9]+/
            for ( changelist in currentBuild.changeSets ) {
              if ( changelist.isEmptySet() ) {
                echo "[DEBUG] change set was empty, skipping JIRA comments."
@@ -410,8 +409,8 @@ END
                echo "     ${change.author}"
                echo ""
                // Workaround for JENKINS-46358
-               writeFile file: 'tmp_commit_file', text: msg
-               sh "grep -o -E '${pattern}' 'tmp_commit_file' >matched_jiras"
+               writeFile file: 'tmp_commit_file', text: "${msg}"
+               sh '''grep -o -E 'HBASE-[0-9]+' 'tmp_commit_file' >matched_jiras'''
                def jiras = readFile(file: 'matched_jiras').split()
                if (jiras.length == 0) {
                  echo "[WARN] no JIRA key found in message, TODO email committer"
