@@ -418,12 +418,14 @@ END
                  cat << 'EOF' > tmp_commit_file
 ${msg}
 EOF
+                 echo 'wrote message into file.'
+                 cat tmp_commit_file
+                 grep -o -E 'HBASE-[0-9]+' 'tmp_commit_file' >matched_jiras
+                 echo "finished filtering via grep."
+                 cat matched_jiras
 """
-               echo "finished writing commit to a file."
-               sh "grep -o -E 'HBASE-[0-9]+' 'tmp_commit_file' >matched_jiras"
-               echo "finished filtering via grep."
-               // End workaround for JENKINS-46258
                def jiras = readFile(file: 'matched_jiras').split()
+               // End workaround for JENKINS-46258
                if (jiras.length == 0) {
                  echo "[WARN] no JIRA key found in message, TODO email committer"
                }
