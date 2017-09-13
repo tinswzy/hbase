@@ -1207,6 +1207,26 @@ public final class HConstants {
   public static final String DEFAULT_TEMPORARY_HDFS_DIRECTORY = "/user/"
       + System.getProperty("user.name") + "/hbase-staging";
 
+  /**
+   * Auto detect if public or classic network connection is available to use
+   */
+  public static final String HBASE_AUTO_NETWORK_DETECT = "hbase.auto-network.detect";
+  public static final boolean HBASE_AUTO_NETWORK_DETECT_DEFAULT = true;
+  /**
+   * Public connection related config
+   */
+  public static final String HBASE_PUB_NETWORK_ROOT_ZNODE = "hbase.pub-network.root.znode";
+  public static final String HBASE_PUB_NETWORK_ROOT_ZNODE_DEFAULT = "/vhost/public";
+  public static final String HBASE_PUB_NETWORK_CONN_INFIX = "hbase.pub-network.conn.infix";
+  public static final String HBASE_PUB_NETWORK_CONN_INFIX_DEFAULT = "-proxy-pub-";
+  /**
+   * Classic connection related config
+   */
+  public static final String HBASE_CLASSIC_NETWORK_ROOT_ZNODE = "hbase.classic-network.root.znode";
+  public static final String HBASE_CLASSIC_NETWORK_ROOT_ZNODE_DEFAULT = "/vhost/classic";
+  public static final String HBASE_CLASSIC_NETWORK_CONN_INFIX = "hbase.classic-network.conn.infix";
+  public static final String HBASE_CLASSIC_NETWORK_CONN_INFIX_DEFAULT = "-proxy-classic-";
+
   private HConstants() {
     // Can't be instantiated with this ctor.
   }

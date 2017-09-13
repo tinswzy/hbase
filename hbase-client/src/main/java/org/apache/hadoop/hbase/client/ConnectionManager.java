@@ -1484,6 +1484,7 @@ class ConnectionManager {
         try {
           checkIfBaseNodeAvailable(zkw);
           ServerName sn = MasterAddressTracker.getMasterAddress(zkw);
+          sn = detectVServerName(sn);
           if (sn == null) {
             String msg = "ZooKeeper available but no active master location found";
             LOG.info(msg);
@@ -1581,15 +1582,16 @@ class ConnectionManager {
       if (isDeadServer(serverName)) {
         throw new RegionServerStoppedException(serverName + " is dead.");
       }
+      ServerName vhostSN = detectVServerName(serverName);
       String key = getStubKey(AdminService.BlockingInterface.class.getName(),
-          serverName.getHostname(), serverName.getPort());
+              vhostSN.getHostname(), vhostSN.getPort());
       this.connectionLock.putIfAbsent(key, key);
       AdminService.BlockingInterface stub = null;
       synchronized (this.connectionLock.get(key)) {
         stub = (AdminService.BlockingInterface)this.stubs.get(key);
         if (stub == null) {
           BlockingRpcChannel channel =
-              this.rpcClient.createBlockingRpcChannel(serverName, user, rpcTimeout);
+              this.rpcClient.createBlockingRpcChannel(vhostSN, user, rpcTimeout);
           stub = AdminService.newBlockingStub(channel);
           this.stubs.put(key, stub);
         }
@@ -1603,15 +1605,16 @@ class ConnectionManager {
       if (isDeadServer(sn)) {
         throw new RegionServerStoppedException(sn + " is dead.");
       }
-      String key = getStubKey(ClientService.BlockingInterface.class.getName(), sn.getHostname(),
-          sn.getPort());
+      ServerName vhostSN = detectVServerName(sn);
+      String key = getStubKey(ClientService.BlockingInterface.class.getName(), vhostSN.getHostname(),
+              vhostSN.getPort());
       this.connectionLock.putIfAbsent(key, key);
       ClientService.BlockingInterface stub = null;
       synchronized (this.connectionLock.get(key)) {
         stub = (ClientService.BlockingInterface)this.stubs.get(key);
         if (stub == null) {
           BlockingRpcChannel channel =
-              this.rpcClient.createBlockingRpcChannel(sn, user, rpcTimeout);
+              this.rpcClient.createBlockingRpcChannel(vhostSN, user, rpcTimeout);
           stub = ClientService.newBlockingStub(channel);
           // In old days, after getting stub/proxy, we'd make a call.  We are not doing that here.
           // Just fail on first actual call rather than in here on setup.
@@ -1619,6 +1622,42 @@ class ConnectionManager {
         }
       }
       return stub;
+    }
+
+    private ServerName detectVServerName(ServerName sn) throws IOException {
+      ServerName vsn = null;
+      if (conf.getBoolean(HConstants.HBASE_AUTO_NETWORK_DETECT, HConstants.HBASE_AUTO_NETWORK_DETECT_DEFAULT)) {
+        String pubInfix = conf.get(HConstants.HBASE_PUB_NETWORK_CONN_INFIX, HConstants.HBASE_PUB_NETWORK_CONN_INFIX_DEFAULT);
+        String classicInfix = conf.get(HConstants.HBASE_CLASSIC_NETWORK_CONN_INFIX, HConstants.HBASE_CLASSIC_NETWORK_CONN_INFIX_DEFAULT);
+        String[] quorum = conf.get(HConstants.ZOOKEEPER_QUORUM).split(",",-1);
+        int pubNum = quorum.length ;
+        int classicNum = quorum.length ;
+        for (String q : quorum) {
+          // Each zk conn should be contains infix, which default is "-pub-"
+          if (q.contains(pubInfix)) {
+            pubNum--;
+          }
+          if(q.contains(classicInfix)){
+            classicNum--;
+          }
+        }
+        String root;
+        if (pubNum == 0) {
+          root = conf.get(HConstants.HBASE_PUB_NETWORK_ROOT_ZNODE, HConstants.HBASE_PUB_NETWORK_ROOT_ZNODE_DEFAULT);
+        } else if (classicNum == 0) {
+          root = conf.get(HConstants.HBASE_CLASSIC_NETWORK_ROOT_ZNODE, HConstants.HBASE_CLASSIC_NETWORK_ROOT_ZNODE_DEFAULT);
+        } else {
+          return sn;
+        }
+        VHostMapListener vhostMap = VHostMapListener.getInstance(root, getConfiguration());
+        if (vhostMap != null && vhostMap.getVhost(sn.getHostname()) != null) {
+          vsn = ServerName.valueOf(vhostMap.getVhost(sn.getHostname()), sn.getPort(), sn.getStartcode());
+        }
+      }
+      if (vsn != null) {
+        return vsn;
+      }
+      return sn;
     }
 
     static String getStubKey(final String serviceName, final String rsHostname, int port) {
